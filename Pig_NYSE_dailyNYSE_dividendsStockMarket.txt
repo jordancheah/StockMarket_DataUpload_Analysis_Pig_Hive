@@ -1,0 +1,727 @@
+﻿Lab Pig-HIVE Stock Market
+
+
+# Create a directory in Hadoop File System
+$ hadoop fs -mkdir datasets/nyse_daily
+
+
+$ hadoop fs -ls datasets
+Found 5 items
+drwxr-xr-x   - vmuser supergroup              0 2015-10-18 01:11 datasets/MillionSongSubset
+drwxr-xr-x   - vmuser supergroup              0 2015-10-15 18:34 datasets/gsod
+drwxr-xr-x   - vmuser supergroup              0 2015-10-23 14:15 datasets/nyse_daily
+-rw-r--r--   1 vmuser supergroup             90 2015-07-27 16:39 datasets/rpd_costs_per_call.csv
+-rw-r--r--   1 vmuser supergroup   75115191 2015-07-24 13:38 datasets/rpd_data_all.csv
+
+
+# Download data and copy to HDFS
+https://github.com/sara-nl/hadoop-courseware/blob/master/data/pig/NYSE_daily
+
+
+$ hadoop fs -put ~/dataset_fin/NYSE_daily datasets/nyse_daily
+$ hadoop fs -ls datasets/nyse_daily
+Found 1 items
+-rw-r--r--   1 vmuser supergroup        3194099 2015-10-23 14:26 datasets/nyse_daily/NYSE_daily
+
+
+# Exploratory Data Analysis
+The data contains the following fields:
+exchange,symbol,date,open,high,low,clos,volume,adj_close
+
+Sample Rows (Tab-separated):
+NYSE    CLI    2009-12-31    35.39    35.70    34.50    34.57    890100    34.12
+NYSE    CLI    2009-12-30    35.22    35.46    34.96    35.40    516900    34.94
+NYSE    CLI    2009-12-29    35.69    35.95    35.21    35.34    556500    34.88
+NYSE    CLI    2009-12-28    35.67    36.23    35.49    35.69    565000    35.23
+NYSE    CLI    2009-12-24    35.38    35.60    35.19    35.47    230200    35.01
+NYSE    CLI    2009-12-23    35.13    35.51    35.07    35.21    520200    34.75
+NYSE    CLI    2009-12-22    34.76    35.04    34.71    35.04    564600    34.58
+NYSE    CLI    2009-12-21    34.65    34.74    34.41    34.73    428400    34.28
+NYSE    CLI    2009-12-18    34.11    34.38    33.73    34.22    1152600    33.77
+NYSE    CLI    2009-12-17    34.18    34.53    33.84    34.21    1082600    33.76
+NYSE    CLI    2009-12-16    34.79    35.10    34.48    34.66    1007900    34.21
+NYSE    CLI    2009-12-15    34.60    34.91    34.39    34.84    813200    34.39
+
+
+# Start the pig shell
+$ pig
+
+
+2015-10-23 14:13:01,286 [main] INFO  org.apache.pig.Main - Apache Pig version 0.12.0-cdh5.4.0 (rUnversioned directory) compiled Apr 21 2015, 12:19:15
+2015-10-23 14:13:01,287 [main] INFO  org.apache.pig.Main - Logging error messages to: /home/vmuser/codes/pig/pig_1445623981250.log
+....
+
+
+# Load Daily NYSE data
+daily = LOAD ‘datasets/nyse_daily/NYSE_daily' AS (exchange:chararray, symbol:chararray, date:chararray, open:float, high:float, low:float, close:float, volume:int, adj_close:float);
+
+
+
+
+grunt> DESCRIBE daily;
+daily: {exchange: chararray,symbol: chararray,date: chararray,open: float,high: float,low: float,close: float,volume: int,adj_close: float}
+
+
+# Group Daily by Symbol
+
+
+grunt> grpstock = GROUP daily BY stock;
+2015-10-23 14:39:34,502 [main] ERROR org.apache.pig.tools.grunt.Grunt - ERROR 1025:
+<line 2, column 26> Invalid field projection. Projected field [stock] does not exist in schema: exchange:chararray,symbol:chararray,date:chararray,open:float,high:float,low:float,close:float,volume:int,adj_close:float.
+Details at logfile: /home/vmuser/codes/pig/pig_1445625410440.log
+
+
+grunt> grp_daily_by_symbol = GROUP daily BY symbol;
+2015-10-24 02:09:12,952 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_CHARARRAY 1 time(s).
+
+
+
+
+grunt> DESCRIBE grp_daily_by_symbol;
+grp_daily_by_symbol: {group: chararray,daily: {(exchange: chararray,symbol: chararray,date: chararray,open: float,high: float,low: float,close: float,volume: int,adj_close: float)}}
+
+
+
+
+# Observe that the dumpfile is sorted by symbol
+grunt> DUMP grp_daily_by_symbol;
+STORE grp_daily_by_symbol INTO ‘grp_daily_by_symbol’;
+# Either DUMP or STORE will kick off a series of Map Reduce job.
+
+
+2015-10-24 02:27:02,314 [main] INFO  org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceLauncher - 100% complete
+2015-10-24 02:27:02,314 [main] INFO  org.apache.pig.tools.pigstats.SimplePigStats - Script Statistics:
+
+
+HadoopVersion    PigVersion    UserId    StartedAt    FinishedAt    Features
+2.6.0-cdh5.4.0    0.12.0-cdh5.4.0    vmuser    2015-10-24 02:26:22    2015-10-24 02:27:02    GROUP_BY
+
+
+Success!
+
+
+Job Stats (time in seconds):
+JobId    Maps    Reduces    MaxMapTime    MinMapTIme    AvgMapTime    MedianMapTime    MaxReduceTime    MinReduceTime    AvgReduceTime    MedianReducetime    Alias    Feature    Outputs
+job_1445623767306_0006    1    1    7    7    7    7    9    99    9    daily,grp_daily_by_symbol    GROUP_BY    hdfs://localhost:8020/user/vmuser/grp_daily_by_symbol,
+
+
+Input(s):
+Successfully read 57391 records (3194482 bytes) from: "hdfs://localhost:8020/user/vmuser/datasets/nyse_daily/NYSE_daily"
+
+
+Output(s):
+Successfully stored 237 records (3268095 bytes) in: "hdfs://localhost:8020/user/vmuser/grp_daily_by_symbol"
+
+
+Counters:
+Total records written : 237
+Total bytes written : 3268095
+Spillable Memory Manager spill count : 0
+Total bags proactively spilled: 0
+Total records proactively spilled: 0
+
+
+Job DAG:
+job_1445623767306_0006
+
+
+
+
+2015-10-24 02:27:02,396 [main] INFO  org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceLauncher - Success!
+
+
+$ hadoop fs -ls grp_daily_by_symbol
+Found 2 items
+-rw-r--r--   1 vmuser supergroup              0 2015-10-24 02:26 grp_daily_by_symbol/_SUCCESS
+-rw-r--r--   1 vmuser supergroup        3268095 2015-10-24 02:26 grp_daily_by_symbol/part-r-00000
+
+
+$ hadoop fs -cat grp_daily_by_symbol/part-r-00000 | less
+CA          {(NYSE,CA,2009-11-27,21.64,22.26,21.56,22.0,1973400,21.96),(NYSE,CA,2009
+-12-01,22.26,22.53,22.21,22.48,3468900,22.44),(NYSE,CA,2009-12-02,22.37,22.64,22
+.16,22.42,2571300,22.38),(NYSE,CA,2009-12-03,22.68,22.74,22.24,22.29,3494500,22.
+25),(NYSE,CA,2009-12-04,22.56,22.66,22.25,22.65,4850000,22.61),(NYSE,CA,2009-12-
+07,22.43,22.65,22.23,22.34,3874200,22.3),(NYSE,CA,2009-12-08,21.96,22.22,21.78,2
+1.91,3423200,21.87),(NYSE,CA,2009-12-09,22.5,22.88,22.36,22.84,7173000,22.8),(NY
+SE,CA,2009-12-10,22.84,23.0,22.64,22.72,3484100,22.68),(NYSE,CA,2009-12-11,22.8,
+22.9,22.67,22.83,3633400,22.79),(NYSE,CA,2009-12-14,23.0,23.25,22.92,22.97,66650
+00,22.93),(NYSE,CA,2009-12-15,22.75,22.99,22.51,22.51,13518100,22.47),(NYSE,CA,2
+009-12-16,22.62,22.86,22.47,22.49,8536700,22.45),(NYSE,CA,2009-12-17,22.86,22.86
+,22.41,22.41,7817700,22.37),(NYSE,CA,2009-12-18,22.55,22.75,22.43,22.51,7590500,
+22.47),(NYSE,CA,2009-12-21,22.79,22.87,22.63,22.65,4099800,22.61),(NYSE,CA,2009-
+12-22,22.67,22.79,22.59,22.6,4286800,22.56),(NYSE,CA,2009-12-23,22.61,22.84,22.5
+6,22.8,4383400,22.76),(NYSE,CA,2009-12-24,22.84,23.24,22.74,23.21,1914500,23.17)
+,(NYSE,CA,2009-12-28,23.28,23.34,22.91,22.95,4456000,22.91),(NYSE,CA,2009-12-29,
+23.02,23.1,22.71,22.77,3480900,22.73),(NYSE,CA,2009-12-30,22.94,23.02,22.55,22.5
+7,5012300,22.53),(NYSE,CA,2009-12-31,22.66,22.81,22.45,22.46,1949200,22.42),(NYS
+E,CA,1988-07-25,26.16,26.88,26.16,26.52,2009500,3.56),(NYSE,CA,1990-12-20,7.24,7
+.6,7.24,7.6,2009100,2.06),(NYSE,CA,2000-10-16,26.0,26.12,25.12,25.44,2200900,24.
+17),(NYSE,CA,2001-10-17,29.85,29.98,27.71,27.9,2009000,26.6),(NYSE,CA,2004-10-20
+,26.8,27.05,26.53,26.98,2009700,26.01),(NYSE,CA,2009-01-02,17.87,18.98,17.87,18.
+9,3871600,18.71),(NYSE,CA,2009-01-05,18.71,18.71,18.36,18.65,5146600,18.46),(NYS
+E,CA,2009-01-06,19.04,19.18,18.69,18.81,5373900,18.62),.....
+
+
+https://wiki.apache.org/pig/ExampleGenerator
+# Use Case: Order Daily by Date
+grunt> order_daily_by_date = ORDER daily BY date;
+grunt> order_daily_by_date = ORDER daily BY date;
+2015-10-24 03:14:29,656 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_FLOAT 1 time(s).
+
+
+grunt> DESCRIBE order_daily_by_date;
+order_daily_by_date: {exchange: chararray,symbol: chararray,date: chararray,open: float,high: float,low: float,close: float,volume: int,adj_close: float}
+
+
+grunt> STORE order_daily_by_date INTO ‘order_daily_by_date’;
+
+
+$ hadoop fs -ls order_daily_by_date
+Found 2 items
+-rw-r--r--   1 vmuser supergroup              0 2015-10-24 03:17 order_daily_by_date/_SUCCESS
+-rw-r--r--   1 vmuser supergroup        3151904 2015-10-24 03:17 order_daily_by_date/part-r-00000
+
+
+$ hadoop fs -cat order_daily_by_date/part-r-00000 | less
+NYSE        CVX         1981-06-25          37.13   38.0        37.13   37.75   2009600 3.3
+NYSE        COP         1982-04-30          31.37   31.62   31.12   31.5        2009400 1.79
+NYSE        CI          1984-01-19          42.88   43.0        42.63   42.75   2009700 2.12
+NYSE        CAT         1984-07-23          34.5        34.75   33.75   34.75   2009600 2.57
+NYSE        CVX         1987-03-09          51.63   51.63   50.88   51.0        2009200 5.4
+NYSE        CMS         1987-05-14          19.0        19.0        18.75   18.75   200900  10.43
+NYSE        CAT         1988-01-18          61.88   62.63   61.63   62.5        2009600 4.82
+NYSE        CSX         1988-02-18          29.87   30.25   29.75   30.12   2009200 4.42
+NYSE        CSX         1988-03-02          29.0        29.5        28.75   29.25   2009200 4.34
+NYSE        CA          1988-07-25          26.16   26.88   26.16   26.52   2009500 3.56
+NYSE        CVX         1990-02-20          69.0        69.37   68.5        69.25   2009200 8.53
+NYSE        CR          1990-08-23          15.51   15.8        15.22   15.32   200900  4.16
+NYSE        CP          1990-10-22          16.0        16.5        16.0        16.5        200900  10.88
+NYSE        CA          1990-12-20          7.24        7.6         7.24        7.6         2009100 2.06
+NYSE        CR          1991-03-08          22.01   22.4        21.91   22.21   200900  6.23
+NYSE        CAT         1991-04-11          46.88   47.5        46.88   47.25   2009600 3.87
+NYSE        CCL         1992-07-02          28.37   28.5        27.75   27.87   2009200 5.34
+NYSE        CI          1994-09-16          63.75   63.88   63.38   63.63   2009700 5.73
+NYSE        CI          1995-04-13          72.87   73.75   72.87   73.62   2009700 6.77
+NYSE        CAT         1995-06-05          59.25   60.63   59.0        59.88   2009600 10.39
+NYSE        COF         1995-09-18          27.44   27.69   26.23   26.84   2009700 8.01
+NYSE        CVX         1995-11-13          47.75   48.63   47.63   48.13   2009400 15.02
+NYSE        CQB         1996-11-15          12.22   12.34   12.22   12.22   200900  156.11
+
+
+
+
+
+
+
+
+
+
+Illustrate
+Illustrate is a new addition to pig that helps users debug their pig scripts.
+The idea is to select a few example data items, and illustrate how they are transformed by the sequence of Pig commands in the user's program. The ExampleGenerator algorithm can select an appropriate and concise set of example data items automatically. It does a better job than random sampling would do; for example, random sampling suffers from the drawback that selective operations such as filters or joins can eliminate all the sampled data items, giving you empty results which is of no help in debugging.
+This "ILLUSTRATE" functionality will avoid people having to test their Pig programs on large data sets, which has a long turnaround time and wastes system resources. The algorithm uses the "Local" execution operators (it does not run on hadoop), so as to generate illustrative example data in near-real-time for the user. 
+
+
+
+
+grunt> illustrate grp_daily_by_symbol;
+
+
+# Load Dividend Data
+$ hadoop fs -put ~/dataset_fin/NYSE_dividends datasets/nyse_daily
+$ hadoop fs -ls datasets/nyse_daily
+Found 2 items
+-rw-r--r--   1 vmuser supergroup        3194099 2015-10-23 14:26 datasets/nyse_daily/NYSE_daily
+-rw-r--r--   1 vmuser supergroup          17027 2015-10-23 15:21 datasets/nyse_daily/NYSE_dividends
+
+
+grunt> divd = LOAD 'datasets/nyse_daily/NYSE_dividends' AS (exchange, symbol, date, dividend);
+
+
+grunt> DESCRIBE divd;
+divd: {exchange: bytearray,symbol: bytearray,date: bytearray,dividend: bytearray}
+
+
+grunt> count_divd = FOREACH (GROUP divd ALL) GENERATE COUNT(divd);
+grunt> DESCRIBE count_divd;
+count_divd: {long}
+
+
+grunt> DUMP count_divd;
+Input(s):
+Successfully read 670 records (17414 bytes) from: "hdfs://localhost:8020/user/vmuser/datasets/nyse_daily/NYSE_dividends"
+
+
+Output(s):
+Successfully stored 1 records (7 bytes) in: "hdfs://localhost:8020/tmp/temp-1397356369/tmp-1380337750"
+
+
+Counters:
+Total records written : 1
+Total bytes written : 7
+Spillable Memory Manager spill count : 0
+Total bags proactively spilled: 0
+Total records proactively spilled: 0
+
+
+2015-10-25 01:35:54,157 [main] INFO  org.apache.pig.backend.hadoop.executionengine.util.MapRedUtil - Total input paths to process : 1
+(670)
+
+
+
+
+
+
+
+
+grunt> grp_divd_by_symbol = GROUP divd BY symbol;
+grunt> DESCRIBE grp_divd_by_symbol;
+
+
+grp_divd_by_symbol: {group: bytearray,divd: {(exchange: bytearray,symbol: bytearray,date: bytearray,dividend: bytearray)}}
+
+
+
+
+
+
+# Use Case: Compute Average Dividend
+Compute the average for each record in grouped, using Pigs built-in function AVG and store the result.
+grunt> avg_divd_by_symbol = FOREACH grp_divd_by_symbol GENERATE GROUP, AVG(divd.dividend);
+2015-10-24 02:42:08,261 [main] ERROR org.apache.pig.tools.grunt.Grunt - ERROR 1025:
+<line 3, column 57> Invalid field projection. Projected field [GROUP] does not exist in schema: group:bytearray,divd:bag{:tuple(exchange:bytearray,symbol:bytearray,date:bytearray,dividend:bytearray)}.
+Details at logfile: /home/vmuser/codes/pig/pig_1445668892134.log
+
+
+grunt> avg_divd_by_symbol = FOREACH grp_divd_by_symbol GENERATE group, AVG(divd.dividend);
+grunt> DESCRIBE avg_divd_by_symbol;
+avg_divd_by_symbol: {group: bytearray,double}
+
+
+grunt> STORE avg_divd_by_symbol INTO ‘avg_divd_by_symbol’;
+# This will kick-off Map Reduce jobs …
+
+
+$ hadoop fs -ls avg_divd_by_symbol
+Found 2 items
+-rw-r--r--   1 vmuser supergroup              0 2015-10-24 02:45 avg_divd_by_symbol/_SUCCESS
+-rw-r--r--   1 vmuser supergroup           1919 2015-10-24 02:45 avg_divd_by_symbol/part-r-00000
+
+
+$ hadoop fs -cat avg_divd_by_symbol/part-r-00000 | less
+
+
+CA          0.04
+CB          0.35
+CE          0.04
+CF          0.1
+CI          0.04
+CL          0.43000000000000005
+CM          0.778
+CP          0.22125
+CR          0.2
+CS          0.096
+CV          0.23
+CW          0.08
+CAE         0.026750000000000003
+CAG         0.1925
+CAH         2.0829999999999997
+CAS         0.06
+CAT         0.42
+CBC         0.05
+CBD         0.15733333333333333
+…
+…
+CXE         0.030416666666666675
+CXH         0.05108333333333334
+CYD         0.1
+CYE         0.05666666666666668
+CYN         0.13749999999999998
+CYS         0.45
+CYT         0.041
+CASC        0.03
+CATO        0.165
+CLNY        0.07
+
+
+
+
+# Use Case: Increased Dividend Report
+
+
+grunt> divd2 = LOAD 'datasets/nyse_daily/NYSE_dividends'  AS (exchange, symbol, date, dividend);
+grunt> DESCRIBE divd2;
+divd2: {exchange: bytearray,symbol: bytearray,date: bytearray,dividend: bytearray}
+
+
+grunt> jnd_divd = JOIN divd BY symbol, divd2 BY symbol;
+grunt> DESCRIBE jnd_divd;
+jnd_divd: {divd::exchange: bytearray,divd::symbol: bytearray,divd::date: bytearray,divd::dividend: bytearray,divd2::exchange: bytearray,divd2::symbol: bytearray,divd2::date: bytearray,divd2::dividend: bytearray}
+
+
+
+
+
+
+
+
+	
+
+	Pig does a cross product between the records from both inputs. To minimize memory usage, it has MapReduce order the records coming into the reducer using the input annotation it added in the map phase. Thus all of the records for the left input arrive first. Pig caches these in memory. All of the records for the right input arrive second. As each of these records arrives, it is crossed with each record from the left side to produce an output record.
+*Filter records: Filter records by date and dividend
+
+
+increased_divd = FILTER jnd_divd BY divd::date < divd2::date AND divd::dividend < divd2::dividend;
+ 
+
+
+	
+
+	
+
+
+
+# Use Case: NYSE Daily Total Trade Estimation by Symbol
+
+
+grunt> daily_trade = FOREACH daily GENERATE volume * close;
+2015-10-24 02:54:51,863 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_FLOAT 1 time(s).
+
+
+grunt> DESCRIBE daily_trade;
+2015-10-24 02:55:01,917 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_FLOAT 1 time(s).
+daily_trade: {float}
+
+
+grunt> DUMP daily_trade;
+
+
+
+
+(3.4769016E7)
+(3.711348E7)
+(1.6174054E7)
+(1.5040875E7)
+(1.2841032E7)
+(1.766688E7)
+(3.606042E7)
+(1.5048108E7)
+(2.6220434E7)
+(2.452692E7)
+(2.1419748E7)
+(4.430834E7)
+(3.6616676E7)
+(1.2646754E7)
+...
+
+
+# Use Case: Selected Field Import, Limit operator,  Unique Records
+
+
+grunt> daily2 = LOAD 'datasets/nyse_daily/NYSE_daily' AS (exchange:chararray, symbol:chararray);
+2015-10-24 03:02:35,559 [main] INFO  org.apache.hadoop.conf.Configuration.deprecation - fs.default.name is deprecated. Instead, use fs.defaultFS
+2015-10-24 03:02:35,559 [main] INFO  org.apache.hadoop.conf.Configuration.deprecation - mapred.job.tracker is deprecated. Instead, use mapreduce.jobtracker.address
+2015-10-24 03:02:35,628 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_FLOAT 1 time(s).
+
+
+grunt> DESCRIBE daily2;
+daily2: {exchange: chararray,symbol: chararray}
+
+
+grunt> DUMP daily2 LIMIT 100;
+
+
+(NYSE,CNO)
+(NYSE,CNO)
+(NYSE,CHB)
+(NYSE,CHB)
+(NYSE,CHB)
+(NYSE,CHB)
+…
+(NYSE,CRT)
+(NYSE,CRT)
+
+
+(NYSE,CRT)
+(NYSE,CRT)
+…
+(NYSE,CVA)
+(NYSE,CVA)
+(NYSE,CVA)
+
+
+
+
+grunt> uniq2 = DISTINCT daily2;
+2015-10-24 03:06:35,737 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_FLOAT 1 time(s).
+
+
+
+
+grunt> DUMP uniq2;
+…
+Input(s):
+Successfully read 57391 records (3194482 bytes) from: "hdfs://localhost:8020/user/vmuser/datasets/nyse_daily/NYSE_daily"
+
+
+Output(s):
+Successfully stored 237 records (4016 bytes) in: "hdfs://localhost:8020/tmp/temp-529821843/tmp-167558307"
+
+
+Counters:
+Total records written : 237
+Total bytes written : 4016
+Spillable Memory Manager spill count : 0
+Total bags proactively spilled: 0
+Total records proactively spilled: 0
+
+
+Job DAG:
+job_1445623767306_0010
+
+
+
+
+2015-10-24 03:07:24,326 [main] INFO  org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceLauncher - Success!
+2015-10-24 03:07:24,327 [main] INFO  org.apache.hadoop.conf.Configuration.deprecation - fs.default.name is deprecated. Instead, use fs.defaultFS
+2015-10-24 03:07:24,327 [main] INFO  org.apache.hadoop.conf.Configuration.deprecation - mapred.job.tracker is deprecated. Instead, use mapreduce.jobtracker.address
+2015-10-24 03:07:24,327 [main] INFO  org.apache.pig.data.SchemaTupleBackend - Key [pig.schematuple] was not set... will not generate code.
+2015-10-24 03:07:24,335 [main] INFO  org.apache.hadoop.mapreduce.lib.input.FileInputFormat - Total input paths to process : 1
+2015-10-24 03:07:24,335 [main] INFO  org.apache.pig.backend.hadoop.executionengine.util.MapRedUtil - Total input paths to process : 1
+(NYSE,CA)
+(NYSE,CB)
+(NYSE,CE)
+(NYSE,CF)
+(NYSE,CI)
+(NYSE,CL)
+(NYSE,CM)
+(NYSE,CN)
+(NYSE,CO)
+(NYSE,CP)
+(NYSE,CR)
+(NYSE,CS)
+(NYSE,CT)
+(NYSE,CV)
+(NYSE,CW)
+(NYSE,CX)
+(NYSE,CY)
+(NYSE,CAB)
+(NYSE,CAE)
+(NYSE,CAF)
+(NYSE,CAG)
+(NYSE,CAH)
+(NYSE,CAJ)
+(NYSE,CAL)
+(NYSE,CAM)
+(NYSE,CAP)
+(NYSE,CAS)
+(NYSE,CAT)
+(NYSE,CBB)
+(NYSE,CBC)
+(NYSE,CBD)
+(NYSE,CBE)
+(NYSE,CBG)
+(NYSE,CBI)
+(NYSE,CBK)
+(NYSE,CBL)
+(NYSE,CBM)
+(NYSE,CBR)
+(NYSE,CBS)
+(NYSE,CBT)
+(NYSE,CBU)
+(NYSE,CBY)
+(NYSE,CBZ)
+(NYSE,CCC)
+(NYSE,CCE)
+(NYSE,CCH)
+(NYSE,CCI)
+(NYSE,CCJ)
+(NYSE,CCK)
+(NYSE,CCL)
+(NYSE,CCM)
+(NYSE,CCO)
+(NYSE,CCS)
+(NYSE,CCT)
+(NYSE,CCU)
+(NYSE,CCW)
+(NYSE,CCZ)
+(NYSE,CDE)
+(NYSE,CDI)
+(NYSE,CDR)
+(NYSE,CEA)
+(NYSE,CEC)
+(NYSE,CEE)
+(NYSE,CEG)
+(NYSE,CEL)
+(NYSE,CEO)
+(NYSE,CFI)
+(NYSE,CFL)
+(NYSE,CFN)
+(NYSE,CFR)
+(NYSE,CFT)
+(NYSE,CFX)
+(NYSE,CGA)
+(NYSE,CGI)
+(NYSE,CGO)
+(NYSE,CGV)
+(NYSE,CGX)
+(NYSE,CHA)
+(NYSE,CHB)
+(NYSE,CHD)
+(NYSE,CHE)
+(NYSE,CHG)
+(NYSE,CHH)
+(NYSE,CHI)
+(NYSE,CHK)
+(NYSE,CHL)
+(NYSE,CHN)
+(NYSE,CHP)
+(NYSE,CHS)
+(NYSE,CHT)
+(NYSE,CHU)
+(NYSE,CHW)
+(NYSE,CHY)
+(NYSE,CIA)
+(NYSE,CIB)
+(NYSE,CIE)
+(NYSE,CIF)
+(NYSE,CIG)
+(NYSE,CII)
+(NYSE,CIM)
+(NYSE,CIR)
+(NYSE,CIT)
+(NYSE,CIU)
+(NYSE,CIX)
+(NYSE,CJA)
+(NYSE,CJB)
+(NYSE,CJR)
+(NYSE,CJS)
+(NYSE,CJT)
+(NYSE,CKH)
+(NYSE,CKP)
+(NYSE,CKR)
+(NYSE,CLB)
+(NYSE,CLC)
+(NYSE,CLD)
+(NYSE,CLF)
+(NYSE,CLH)
+(NYSE,CLI)
+(NYSE,CLP)
+(NYSE,CLR)
+(NYSE,CLS)
+(NYSE,CLW)
+(NYSE,CLX)
+(NYSE,CMA)
+(NYSE,CMC)
+(NYSE,CME)
+(NYSE,CMG)
+(NYSE,CMI)
+(NYSE,CMK)
+(NYSE,CML)
+(NYSE,CMM)
+(NYSE,CMN)
+(NYSE,CMO)
+(NYSE,CMP)
+(NYSE,CMS)
+(NYSE,CMU)
+(NYSE,CMZ)
+(NYSE,CNA)
+(NYSE,CNC)
+(NYSE,CNH)
+(NYSE,CNI)
+(NYSE,CNK)
+(NYSE,CNL)
+(NYSE,CNO)
+(NYSE,CNP)
+(NYSE,CNQ)
+(NYSE,CNS)
+(NYSE,CNW)
+(NYSE,CNX)
+(NYSE,COF)
+(NYSE,COG)
+(NYSE,COH)
+(NYSE,COL)
+(NYSE,COO)
+(NYSE,COP)
+(NYSE,COT)
+(NYSE,COV)
+(NYSE,COY)
+(NYSE,CPA)
+(NYSE,CPB)
+(NYSE,CPC)
+(NYSE,CPE)
+(NYSE,CPF)
+(NYSE,CPK)
+(NYSE,CPL)
+(NYSE,CPN)
+(NYSE,CPO)
+(NYSE,CPP)
+(NYSE,CPT)
+(NYSE,CPV)
+(NYSE,CPX)
+(NYSE,CPY)
+(NYSE,CQB)
+(NYSE,CRA)
+(NYSE,CRE)
+(NYSE,CRH)
+(NYSE,CRI)
+(NYSE,CRK)
+(NYSE,CRL)
+(NYSE,CRM)
+(NYSE,CRN)
+(NYSE,CRP)
+(NYSE,CRR)
+(NYSE,CRS)
+(NYSE,CRT)
+(NYSE,CRY)
+(NYSE,CSA)
+(NYSE,CSC)
+(NYSE,CSE)
+(NYSE,CSH)
+(NYSE,CSJ)
+(NYSE,CSL)
+(NYSE,CSP)
+(NYSE,CSQ)
+(NYSE,CSR)
+(NYSE,CSS)
+(NYSE,CSU)
+(NYSE,CSV)
+(NYSE,CSX)
+(NYSE,CTB)
+(NYSE,CTL)
+(NYSE,CTS)
+(NYSE,CTV)
+(NYSE,CUB)
+(NYSE,CUK)
+(NYSE,CUZ)
+(NYSE,CVA)
+(NYSE,CVB)
+(NYSE,CVC)
+(NYSE,CVD)
+(NYSE,CVE)
+(NYSE,CVG)
+(NYSE,CVH)
+(NYSE,CVI)
+(NYSE,CVO)
+(NYSE,CVS)
+(NYSE,CVX)
+(NYSE,CWF)
+(NYSE,CWT)
+(NYSE,CWZ)
+(NYSE,CXE)
+(NYSE,CXG)
+(NYSE,CXH)
+(NYSE,CXO)
+(NYSE,CXS)
+(NYSE,CXW)
+(NYSE,CYD)
+(NYSE,CYE)
+(NYSE,CYH)
+(NYSE,CYN)
+(NYSE,CYS)
+(NYSE,CYT)
+(NYSE,CZZ)
+(NYSE,CACI)
+(NYSE,CASC)
+(NYSE,CATO)
+(NYSE,CLNY)

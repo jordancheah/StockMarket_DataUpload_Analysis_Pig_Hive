@@ -1,0 +1,253 @@
+﻿# Create data files to HDFS
+$ ls -la ~/dataset_fin/history.index/
+total 2296
+drwxrwxr-x 2 vmuser vmuser   4096 Oct 23 16:47 .
+drwxrwxr-x 4 vmuser vmuser   4096 Oct 23 16:47 ..
+-rw-rw-r-- 1 vmuser vmuser 629115 Oct 23 16:36 DJIA-1985-2015.csv
+-rw-rw-r-- 1 vmuser vmuser 838705 Oct 23 16:45 NASDAQ-1971-2015.csv
+-rw-rw-r-- 1 vmuser vmuser 872258 Oct 23 16:39 SP-1970-2015.csv
+
+
+$ hadoop fs -ls datasets
+Found 6 items
+drwxr-xr-x   - vmuser supergroup              0 2015-10-18 01:11 datasets/MillionSongSubset
+drwxr-xr-x   - vmuser supergroup              0 2015-10-15 18:34 datasets/gsod
+drwxr-xr-x   - vmuser supergroup              0 2015-10-23 15:21 datasets/nyse_daily
+-rw-r--r--   1 vmuser supergroup          17027 2015-10-23 15:20 datasets/nyse_dividends
+-rw-r--r--   1 vmuser supergroup             90 2015-07-27 16:39 datasets/rpd_costs_per_call.csv
+-rw-r--r--   1 vmuser supergroup   75115191 2015-07-24 13:38 datasets/rpd_data_all.csv
+
+
+# You can use hadoop fs to copy the entire directory
+$ hadoop fs -put ~/dataset_fin/history.index datasets
+$ hadoop fs -ls datasets/history.index
+Found 3 items
+-rw-r--r--   1 vmuser supergroup         629115 2015-10-25 01:45 datasets/history.index/DJIA-1985-2015.csv
+-rw-r--r--   1 vmuser supergroup         838705 2015-10-25 01:45 datasets/history.index/NASDAQ-1971-2015.csv
+-rw-r--r--   1 vmuser supergroup         872258 2015-10-25 01:45 datasets/history.index/SP-1970-2015.csv
+
+
+# Exploratory Data Analysis
+$ wc ~/dataset_fin/history.index/DJIA-1985-2015.csv
+  7750   7751 629115 /home/vmuser/dataset_fin/history.index/DJIA-1985-2015.csv
+
+
+$ less ~/dataset_fin/history.index/DJIA-1985-2015.csv
+Date,Open,High,Low,Close,Volume,Adj Close
+2015-10-22,17180.880859,17505.179688,17180.880859,17489.160156,152420000,17489.160156
+2015-10-21,17225.929688,17314.990234,17153.130859,17168.609375,107100000,17168.609375
+2015-10-20,17228.470703,17264.880859,17147.990234,17217.109375,106670000,17217.109375
+2015-10-19,17209.429688,17235.949219,17129.189453,17230.539062,118430000,17230.539062
+2015-10-16,17141.75,17220.019531,17107.349609,17215.970703,145880000,17215.970703
+2015-10-15,16944.859375,17144.419922,16933.570312,17141.75,122960000,17141.75
+2015-10-14,17079.080078,17111.380859,16887.669922,16924.75,120110000,16924.75
+
+
+
+
+$ wc ~/dataset_fin/history.index/NASDAQ-1971-2015.csv
+ 11279  11280 838705 /home/vmuser/dataset_fin/history.index/NASDAQ-1971-2015.csv
+
+
+$ less ~/dataset_fin/history.index/NASDAQ-1971-2015.csv
+Date,Open,High,Low,Close,Volume,Adj Close
+2015-10-22,4875.959961,4926.990234,4861.799805,4920.049805,2156040000,4920.049805
+2015-10-21,4903.97998,4904.850098,4836.459961,4840.120117,1895390000,4840.120117
+2015-10-20,4900.02002,4909.370117,4866.600098,4880.970215,1711700000,4880.970215
+2015-10-19,4873.540039,4915.490234,4865.830078,4905.470215,1619920000,4905.470215
+2015-10-16,4872.359863,4886.950195,4851.279785,4886.689941,1855290000,4886.689941
+2015-10-15,4799.430176,4870.100098,4795.290039,4870.100098,1942900000,4870.100098
+2015-10-14,4801.350098,4820.089844,4771.620117,4782.850098,1902460000,4782.850098
+2015-10-13,4809.240234,4858.279785,4793.919922,4796.609863,1565060000,4796.609863
+2015-10-12,4839.790039,4846.740234,4818.169922,4838.640137,1343820000,4838.640137
+2015-10-09,4817.279785,4841.379883,4804.589844,4830.470215,1804260000,4830.470215
+2015-10-08,4775.060059,4819.069824,4737.930176,4810.790039,1984230000,4810.790039
+2015-10-07,4775.049805,4791.149902,4728.709961,4791.149902,2149890000,4791.149902
+2015-10-06,4767.629883,4783.370117,4711.790039,4748.359863,2085020000,4748.359863
+2015-10-05,4742.129883,4785.910156,4740.240234,4781.259766,2005320000,4781.259766
+2015-10-02,4566.129883,4707.779785,4552.339844,4707.779785,2183320000,4707.779785
+
+
+$ wc ~/dataset_fin/history.index/SP-1970-2015.csv
+ 11560  11561 872258 /home/vmuser/dataset_fin/history.index/SP-1970-2015.csv
+$ less ~/dataset_fin/history.index/SP-1970-2015.csv
+Date,Open,High,Low,Close,Volume,Adj Close
+2015-10-22,2021.880005,2055.199951,2021.880005,2052.51001,4430850000,2052.51001
+2015-10-21,2033.469971,2037.969971,2017.219971,2018.939941,3627790000,2018.939941
+2015-10-20,2033.130005,2039.119995,2026.609985,2030.77002,3331500000,2030.77002
+2015-10-19,2031.72998,2034.449951,2022.310059,2033.660034,3287320000,2033.660034
+2015-10-16,2024.369995,2033.540039,2020.459961,2033.109985,3595430000,2033.109985
+2015-10-15,1996.469971,2024.150024,1996.469971,2023.859985,3746290000,2023.859985
+2015-10-14,2003.660034,2009.560059,1990.72998,1994.23999,3644590000,1994.23999
+2015-10-13,2015.00,2022.339966,2001.780029,2003.689941,3401920000,2003.689941
+2015-10-12,2015.650024,2018.660034,2010.550049,2017.459961,2893250000,2017.459961
+2015-10-09,2013.72998,2020.130005,2007.609985,2014.890015,3706900000,2014.890015
+2015-10-08,1994.01001,2016.50,1987.530029,2013.430054,3939140000,2013.430054
+2015-10-07,1982.339966,1999.310059,1976.439941,1995.829956,4666470000,1995.829956
+2015-10-06,1986.630005,1991.619995,1971.98999,1979.920044,4202400000,1979.920044
+2015-10-05,1954.329956,1989.170044,1954.329956,1987.050049,4334490000,1987.050049
+2015-10-02,1921.77002,1951.359985,1893.699951,1951.359985,4378570000,1951.359985
+2015-10-01,1919.650024,1927.209961,1900.699951,1923.819946,3983600000,1923.819946
+2015-09-30,1887.140015,1920.530029,1887.140015,1920.030029,4525070000,1920.030029
+
+
+# Pig Data Analysis
+
+
+DJIA = LOAD ‘datasets/history.index/DJIA-1985-2015.csv'  USING PigStorage(',') AS (date:chararray, open:float, high:float, low:float, close:float, volume:int, adj_close:float);
+
+
+grunt> DESCRIBE DJIA;
+DJIA: {date: chararray,open: float,high: float,low: float,close: float,volume: int,adj_close: float}
+
+
+# Count number of rows
+grunt> count_DJIA = FOREACH (GROUP DJIA ALL) GENERATE COUNT(DJIA);
+grunt> DESCRIBE count_DJIA;
+count_DJIA: {long}
+
+
+grunt> DUMP count_DJIA;
+Input(s):
+Successfully read 7750 records (629509 bytes) from: "hdfs://localhost:8020/user/vmuser/datasets/history.index/DJIA-1985-2015.csv"
+
+
+Output(s):
+Successfully stored 1 records (7 bytes) in: "hdfs://localhost:8020/tmp/temp1056770525/tmp2050773137"
+
+
+(7750)
+
+
+
+
+# Display the first few rows
+grunt> STORE (LIMIT DJIA 10) INTO 'DJIA_small';
+$ hadoop fs -cat DJIA_small
+cat: `DJIA_small': Is a directory
+vmuser@packer-virtualbox-iso:~$ hadoop fs -ls DJIA_small
+Found 2 items
+-rw-r--r--   1 vmuser supergroup              0 2015-10-25 02:06 DJIA_small/_SUCCESS
+-rw-r--r--   1 vmuser supergroup            854 2015-10-25 02:06 DJIA_small/part-r-00000
+vmuser@packer-virtualbox-iso:~$ hadoop fs -cat DJIA_small/part-r-00000
+Date,Open,High,Low,Close,Volume,Adj Close                                            
+2015-10-14,17079.080078,17111.380859,16887.669922,16924.75,120110000,16924.75                                            
+2015-10-15,16944.859375,17144.419922,16933.570312,17141.75,122960000,17141.75                                            
+2015-10-16,17141.75,17220.019531,17107.349609,17215.970703,145880000,17215.970703                                    
+2015-10-12,17082.289062,17139.210938,17064.580078,17131.859375,72500000,17131.859375                                    
+2015-10-13,17113.550781,17172.810547,17034.449219,17081.890625,99400000,17081.890625                                    
+2015-10-19,17209.429688,17235.949219,17129.189453,17230.539062,118430000,17230.539062                                    
+2015-10-20,17228.470703,17264.880859,17147.990234,17217.109375,106670000,17217.109375                                    
+2015-10-21,17225.929688,17314.990234,17153.130859,17168.609375,107100000,17168.609375                                    
+2015-10-22,17180.880859,17505.179688,17180.880859,17489.160156,152420000,17489.160156            
+
+
+# Remove the header row
+grunt> DJIA_WithHeader = LOAD 'datasets/history.index/DJIA-1985-2015.csv' USING PigStorage(',') AS (date:chararray, open:float, high:float, low:float, close:float, volume:int, adj_close:float);
+
+
+grunt> DESCRIBE DJIA_WithHeader;
+DJIA_WithHeader: {date: chararray,open: float,high: float,low: float,close: float,volume: int,adj_close: float}
+
+
+grunt> ranked = RANK DJIA_WithHeader;
+
+
+grunt> ranked_NoHeader = FILTER ranked BY ($0 > 1);
+2015-10-25 02:27:59,503 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_LONG 1 time(s).
+
+
+grunt> DJIA = FOREACH ranked_NoHeader GENERATE date, open, high, low, close, volume, adj_close;
+2015-10-25 02:28:15,293 [main] WARN  org.apache.pig.PigServer - Encountered Warning IMPLICIT_CAST_TO_LONG 1 time(s).
+
+
+count_DJIA = FOREACH (GROUP DJIA ALL) GENERATE COUNT(DJIA);
+grunt> DESCRIBE count_DJIA;
+count_DJIA: {long}
+
+
+grunt> DUMP count_DJIA;
+STORE count_DJIA INTO ‘count_DJIA’;
+
+
+$ hadoop fs -ls count_DJIA
+Found 2 items
+-rw-r--r--   1 vmuser supergroup              0 2015-10-25 02:36 count_DJIA/_SUCCESS
+-rw-r--r--   1 vmuser supergroup              5 2015-10-25 02:36 count_DJIA/part-r-00000
+
+
+
+$ hadoop fs -cat count_DJIA/part-r-00000
+7749
+
+
+grunt> STORE (LIMIT DJIA 10) INTO 'DJIA_small2';
+$ hadoop fs -cat DJIA_small2
+$ hadoop fs -cat DJIA_small2/part-r-00000
+2015-10-22    17180.88    17505.18    17180.88    17489.16    152420000    17489.16
+2015-10-21    17225.93    17314.99    17153.13    17168.61    107100000    17168.61
+2015-10-20    17228.47    17264.88    17147.99    17217.11    106670000    17217.11
+2015-10-19    17209.43    17235.95    17129.19    17230.54    118430000    17230.54
+2015-10-16    17141.75    17220.02    17107.35    17215.97    145880000    17215.97
+2015-10-15    16944.86    17144.42    16933.57    17141.75    122960000    17141.75
+2015-10-14    17079.08    17111.38    16887.67    16924.75    120110000    16924.75
+2015-10-13    17113.55    17172.81    17034.45    17081.89    99400000    17081.89
+2015-10-12    17082.29    17139.21    17064.58    17131.86    72500000    17131.86
+2015-10-09    17054.69    17110.88    17027.23    17084.49    103730000    17084.49
+
+
+
+
+
+
+# Lesson Learned: Pig Processing to remove header is a MapReduce operation - more expensive.  Use Unix to remove header.  Don’t use Pig.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# When are the Top 5 highest DJIA
+Top5_DJIA = LIMIT (ORDER DJIA BY close DESC) 5;
+STORE Top5_DJIA INTO ‘Top5_DJIA’;
+
+
+$ hadoop fs -cat Top5_DJIA/part-r-00000
+2015-05-19    18300.48    18351.36    18261.35    18312.39    87200000    18312.39
+2015-05-18    18267.25    18325.54    18244.26    18298.88    79080000    18298.88
+2015-03-02    18134.05    18288.63    18122.59    18288.63    89790000    18288.63
+2015-05-21    18285.87    18314.89    18249.9    18285.74    84270000    18285.74
+2015-05-20    18315.06    18350.13    18272.56    18285.4    80190000    18285.4
+
+
+# When are the Top 3 highest DJIA of every year?
+Top3EachYear_DJIA = LIMIT (ORDER DJIA BY close DESC) 3;
+STORE Top3EachYear_DJIA INTO ‘Top3EachYear_DJIA’;
+
+
+# When is the lowest DJIA
+Bot5_DJIA = LIMIT (ORDER DJIA BY close ASC) 5;
+STORE Bot5_DJIA INTO ‘Bot5_DJIA’;
+
+
+# Explore some Pig UDFs
+# Calculate the daily Moving Average.  Use UDF.
+
+
+# When is the biggest weekly decline?
+
+
+# When is the biggest monthly decline?
+
+
+# When is the biggest annual decline?
